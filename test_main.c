@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h> // For malloc/free
 
-#include "tree.h"
+#include "ibst.h"
 
 static int tests_run = 0;
 static int tests_passed = 0;
 
 typedef struct task {
     int priority;
-    node_t node;
+    ibst_node_t node;
 } task_t;
 
-int compare(node_t *current, int target) {
+int compare(ibst_node_t *current, int target) {
     task_t *task = CONTAINER_OF(current, task_t, node);
     return task->priority - target;
 }
@@ -51,7 +51,7 @@ void test_compare_function() {
 
 void test_search_empty_tree() {
     printf("\n--- Running Test: test_search_empty_tree ---\n");
-    node_t *result = search(NULL, 10, compare);
+    ibst_node_t *result = ibst_search(NULL, 10, compare);
     ASSERT_TRUE(result == NULL, "search in an empty tree should return NULL");
 }
 
@@ -59,10 +59,10 @@ void test_search_single_node_tree() {
     printf("\n--- Running Test: test_search_single_node_tree ---\n");
     task_t *root_task = create_test_task_node(20);
 
-    node_t *result_found = search(&root_task->node, 20, compare);
+    ibst_node_t *result_found = ibst_search(&root_task->node, 20, compare);
     ASSERT_TRUE(result_found == &root_task->node, "search for existing node (20) in single node tree");
 
-    node_t *result_not_found = search(&root_task->node, 10, compare);
+    ibst_node_t *result_not_found = ibst_search(&root_task->node, 10, compare);
     ASSERT_TRUE(result_not_found == NULL, "search for non-existing node (10) in single node tree");
 
     free(root_task);
@@ -82,26 +82,26 @@ void test_search_multi_node_tree() {
     root_task->node.right = &right_task->node;
 
     // Test existing nodes
-    node_t *result_20 = search(&root_task->node, 20, compare);
+    ibst_node_t *result_20 = ibst_search(&root_task->node, 20, compare);
     ASSERT_TRUE(result_20 == &root_task->node, "search for root node (20) in multi-node tree");
 
-    node_t *result_10 = search(&root_task->node, 10, compare);
+    ibst_node_t *result_10 = ibst_search(&root_task->node, 10, compare);
     ASSERT_TRUE(result_10 == &left_task->node, "search for left child (10) in multi-node tree");
 
-    node_t *result_30 = search(&root_task->node, 30, compare);
+    ibst_node_t *result_30 = ibst_search(&root_task->node, 30, compare);
     ASSERT_TRUE(result_30 == &right_task->node, "search for right child (30) in multi-node tree");
 
     // Test non-existing nodes
-    node_t *result_5 = search(&root_task->node, 5, compare);
+    ibst_node_t *result_5 = ibst_search(&root_task->node, 5, compare);
     ASSERT_TRUE(result_5 == NULL, "search for non-existing node (5) in multi-node tree");
 
-    node_t *result_15 = search(&root_task->node, 15, compare);
+    ibst_node_t *result_15 = ibst_search(&root_task->node, 15, compare);
     ASSERT_TRUE(result_15 == NULL, "search for non-existing node (15) in multi-node tree");
 
-    node_t *result_25 = search(&root_task->node, 25, compare);
+    ibst_node_t *result_25 = ibst_search(&root_task->node, 25, compare);
     ASSERT_TRUE(result_25 == NULL, "search for non-existing node (25) in multi-node tree");
 
-    node_t *result_35 = search(&root_task->node, 35, compare);
+    ibst_node_t *result_35 = ibst_search(&root_task->node, 35, compare);
     ASSERT_TRUE(result_35 == NULL, "search for non-existing node (35) in multi-node tree");
 
     free(root_task);

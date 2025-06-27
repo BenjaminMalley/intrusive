@@ -1,6 +1,6 @@
-#include "tree.h"
+#include "ibst.h"
 
-node_t* search(node_t *current, int target, int (*compare)(node_t *node, int target)) {
+ibst_node_t* ibst_search(ibst_node_t *current, int target, int (*compare)(ibst_node_t *node, int target)) {
     while (current != NULL) {
         int result = compare(current, target);
         if (result == 0) {
