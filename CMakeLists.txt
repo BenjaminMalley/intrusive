@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(learnc C)
+project(intrusive C)
 
 # Define source files
-set(learnc_sources
+set(intrusive_sources
     ibst.c
 )
 
 # Add a library for the core functions (optional, but good practice for reusability)
-add_library(learnc_core STATIC ${learnc_sources})
+add_library(intrusive_core STATIC ${intrusive_sources})
 
 # Add an executable (e.g., a main application that uses the core functions)
 # For now, we'll assume there might be a main.c later, or just a dummy executable
@@ -20,15 +20,15 @@ add_library(learnc_core STATIC ${learnc_sources})
 enable_testing()
 
 # Add a test executable
-add_executable(learnc_test test_main.c) # Assuming a test_main.c will contain test cases
+add_executable(intrusive_test test_main.c) # Assuming a test_main.c will contain test cases
 
 # Link the test executable against the core library
-target_link_libraries(learnc_test learnc_core)
+target_link_libraries(intrusive_test intrusive_core)
 
 # Add a test to CTest
-add_test(NAME learnc_unit_tests COMMAND learnc_test)
+add_test(NAME intrusive_unit_tests COMMAND intrusive_test)
 
 # You can also add more sophisticated test frameworks like Google Test or Catch2
 # For example, with Google Test:
 # find_package(GTest CONFIG REQUIRED)
-# target_link_libraries(learnc_test GTest::gtest_main)
+# target_link_libraries(intrusive_test GTest::gtest_main)
