@@ -2,7 +2,7 @@
 #define INTRUSIVE_LIST_H
 
 typedef struct ilist_node {
-    ilist_node *next;
+    struct ilist_node *next;
 } ilist_node_t;
 
 static inline void ilist_ins_after(ilist_node_t *prev, ilist_node_t *toInsert) {
@@ -13,6 +13,9 @@ static inline void ilist_ins_after(ilist_node_t *prev, ilist_node_t *toInsert) {
 
 static inline ilist_node_t* ilist_del_after(ilist_node_t *prev) {
     ilist_node_t *next = prev->next;
+    if (next == NULL) {
+        return NULL; // No node to delete after prev
+    }
     prev->next = next->next;
     return next;
 }

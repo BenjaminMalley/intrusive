@@ -2,6 +2,43 @@
 #include <stdlib.h> // For malloc/free
 
 #include "ibst.h"
+#include "ilist.h"
+#include "idlist.h"
+
+typedef struct ilist_item {
+    int value;
+    ilist_node_t node;
+} ilist_item_t;
+
+// Helper to create an ilist_item
+ilist_item_t* create_ilist_item(int value) {
+    ilist_item_t *new_item = (ilist_item_t*) malloc(sizeof(ilist_item_t));
+    if (new_item == NULL) {
+        fprintf(stderr, "Memory allocation failed for ilist_item.\n");
+        exit(EXIT_FAILURE);
+    }
+    new_item->value = value;
+    new_item->node.next = NULL;
+    return new_item;
+}
+
+typedef struct idlist_item {
+    int value;
+    idlist_node_t node;
+} idlist_item_t;
+
+// Helper to create an idlist_item
+idlist_item_t* create_idlist_item(int value) {
+    idlist_item_t *new_item = (idlist_item_t*) malloc(sizeof(idlist_item_t));
+    if (new_item == NULL) {
+        fprintf(stderr, "Memory allocation failed for idlist_item.\n");
+        exit(EXIT_FAILURE);
+    }
+    new_item->value = value;
+    new_item->node.next = NULL;
+    new_item->node.prev = NULL;
+    return new_item;
+}
 
 static int tests_run = 0;
 static int tests_passed = 0;
@@ -109,13 +146,149 @@ void test_search_multi_node_tree() {
     free(right_task);
 }
 
+void test_ilist_ins_after() {
+    printf("\n--- Running Test: test_ilist_ins_after ---\n");
+    ilist_item_t *head = create_ilist_item(10);
+    ilist_item_t *item1 = create_ilist_item(20);
+    ilist_item_t *item2 = create_ilist_item(30);
+
+    // Initial list: head -> NULL
+    // Insert item1 after head: head -> item1 -> NULL
+    ilist_ins_after(&head->node, &item1->node);
+    ASSERT_TRUE(head->node.next == &item1->node, "ilist_ins_after: head->next should be item1");
+    ASSERT_TRUE(item1->node.next == NULL, "ilist_ins_after: item1->next should be NULL");
+
+    // Insert item2 after head: head -> item2 -> item1 -> NULL
+    ilist_ins_after(&head->node, &item2->node);
+    ASSERT_TRUE(head->node.next == &item2->node, "ilist_ins_after: head->next should be item2");
+    ASSERT_TRUE(item2->node.next == &item1->node, "ilist_ins_after: item2->next should be item1");
+    ASSERT_TRUE(item1->node.next == NULL, "ilist_ins_after: item1->next should still be NULL");
+
+    free(head);
+    free(item1);
+    free(item2);
+}
+
+void test_ilist_del_after() {
+    printf("\n--- Running Test: test_ilist_del_after ---\n");
+    ilist_item_t *head = create_ilist_item(10);
+    ilist_item_t *item1 = create_ilist_item(20);
+    ilist_item_t *item2 = create_ilist_item(30);
+
+    // Build list: head -> item1 -> item2 -> NULL
+    ilist_ins_after(&head->node, &item2->node);
+    ilist_ins_after(&head->node, &item1->node);
+
+    // List is now: head(10) -> item1(20) -> item2(30) -> NULL
+    ASSERT_TRUE(head->node.next == &item1->node, "ilist_del_after setup: head->next should be item1");
+    ASSERT_TRUE(item1->node.next == &item2->node, "ilist_del_after setup: item1->next should be item2");
+    ASSERT_TRUE(item2->node.next == NULL, "ilist_del_after setup: item2->next should be NULL");
+
+    // Delete item1 (after head)
+    ilist_node_t *deleted_node = ilist_del_after(&head->node);
+    ASSERT_TRUE(deleted_node == &item1->node, "ilist_del_after: Deleted node should be item1");
+    ASSERT_TRUE(head->node.next == &item2->node, "ilist_del_after: head->next should now be item2");
+    ASSERT_TRUE(item2->node.next == NULL, "ilist_del_after: item2->next should still be NULL");
+
+    // Delete item2 (which is now after head)
+    deleted_node = ilist_del_after(&head->node);
+    ASSERT_TRUE(deleted_node == &item2->node, "ilist_del_after: Deleted node should be item2");
+    ASSERT_TRUE(head->node.next == NULL, "ilist_del_after: head->next should now be NULL");
+
+    // Attempt to delete from an empty list (after head which has no next)
+    deleted_node = ilist_del_after(&head->node);
+    ASSERT_TRUE(deleted_node == NULL, "ilist_del_after: Deleting from empty list should return NULL");
+
+    free(head);
+    free(item1); // Still need to free even if deleted from list
+    free(item2); // Still need to free even if deleted from list
+}
+
+void test_idlist_ins() {
+    printf("\n--- Running Test: test_idlist_ins ---\n");
+    idlist_item_t *head = create_idlist_item(10);
+    idlist_item_t *item1 = create_idlist_item(20);
+    idlist_item_t *item2 = create_idlist_item(30);
+
+    // A head node for an intrusive doubly linked list needs to point to itself
+    // to represent an empty list.
+    head->node.next = &head->node;
+    head->node.prev = &head->node;
+
+    // Insert item1 after head: head <-> item1 <-> head
+    ilist_ins(&item1->node, &head->node); // Note: idlist.h uses ilist_ins/del
+    ASSERT_TRUE(head->node.next == &item1->node, "idlist_ins: head->next should be item1");
+    ASSERT_TRUE(head->node.prev == &item1->node, "idlist_ins: head->prev should be item1");
+    ASSERT_TRUE(item1->node.next == &head->node, "idlist_ins: item1->next should be head");
+    ASSERT_TRUE(item1->node.prev == &head->node, "idlist_ins: item1->prev should be head");
+
+    // Insert item2 after head (i.e., before item1): head <-> item2 <-> item1 <-> head
+    ilist_ins(&item2->node, &head->node);
+    ASSERT_TRUE(head->node.next == &item2->node, "idlist_ins: head->next should be item2");
+    ASSERT_TRUE(item2->node.next == &item1->node, "idlist_ins: item2->next should be item1");
+    ASSERT_TRUE(item1->node.prev == &item2->node, "idlist_ins: item1->prev should be item2");
+    ASSERT_TRUE(head->node.prev == &item1->node, "idlist_ins: head->prev should be item1");
+
+    free(head);
+    free(item1);
+    free(item2);
+}
+
+void test_idlist_del() {
+    printf("\n--- Running Test: test_idlist_del ---\n");
+    idlist_item_t *head = create_idlist_item(10);
+    idlist_item_t *item1 = create_idlist_item(20);
+    idlist_item_t *item2 = create_idlist_item(30);
+
+    head->node.next = &head->node;
+    head->node.prev = &head->node;
+
+    // Build list: head <-> item1 <-> item2 <-> head
+    ilist_ins(&item1->node, &head->node);
+    ilist_ins(&item2->node, &item1->node); // Insert item2 after item1
+
+    // Verify setup
+    ASSERT_TRUE(head->node.next == &item1->node, "idlist_del setup: head->next should be item1");
+    ASSERT_TRUE(item1->node.prev == &head->node, "idlist_del setup: item1->prev should be head");
+    ASSERT_TRUE(item1->node.next == &item2->node, "idlist_del setup: item1->next should be item2");
+    ASSERT_TRUE(item2->node.prev == &item1->node, "idlist_del setup: item2->prev should be item1");
+    ASSERT_TRUE(item2->node.next == &head->node, "idlist_del setup: item2->next should be head");
+    ASSERT_TRUE(head->node.prev == &item2->node, "idlist_del setup: head->prev should be item2");
+
+    // Delete item1
+    ilist_del(&item1->node);
+    ASSERT_TRUE(head->node.next == &item2->node, "idlist_del: head->next should be item2 after deleting item1");
+    ASSERT_TRUE(item2->node.prev == &head->node, "idlist_del: item2->prev should be head after deleting item1");
+    ASSERT_TRUE(item1->node.next == NULL, "idlist_del: deleted item1->next should be NULL");
+    ASSERT_TRUE(item1->node.prev == NULL, "idlist_del: deleted item1->prev should be NULL");
+
+    // Delete item2 (now it's the only one between head and head)
+    ilist_del(&item2->node);
+    ASSERT_TRUE(head->node.next == &head->node, "idlist_del: head->next should point to itself after deleting all items");
+    ASSERT_TRUE(head->node.prev == &head->node, "idlist_del: head->prev should point to itself after deleting all items");
+    ASSERT_TRUE(item2->node.next == NULL, "idlist_del: deleted item2->next should be NULL");
+    ASSERT_TRUE(item2->node.prev == NULL, "idlist_del: deleted item2->prev should be NULL");
+
+    free(head);
+    free(item1);
+    free(item2);
+}
+
 int main() {
-    printf("Running unit tests for tree.c functions...\n");
+    printf("Running unit tests for intrusive data structures (IBST, Ilist, IDList)...\n");
 
     test_compare_function();
     test_search_empty_tree();
     test_search_single_node_tree();
     test_search_multi_node_tree();
+
+    // Intrusive List Tests
+    test_ilist_ins_after();
+    test_ilist_del_after();
+
+    // Intrusive Doubly Linked List Tests
+    test_idlist_ins();
+    test_idlist_del();
 
     printf("\n--- Test Summary ---\n");
     printf("Total tests run: %d\n", tests_run);

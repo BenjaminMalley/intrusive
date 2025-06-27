@@ -4,8 +4,7 @@ project(learnc C)
 
 # Define source files
 set(learnc_sources
-    list.c
-    tree.c
+    ibst.c
 )
 
 # Add a library for the core functions (optional, but good practice for reusability)
