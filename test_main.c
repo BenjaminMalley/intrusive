@@ -1,16 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h> // For malloc/free
 
-// Include the definitions from tree.c directly.
-// This relies on the #ifndef INTRUSIVE_TREE guard within tree.c to prevent
-// redefinition issues if tree.c is also compiled into a library.
-// This is not standard practice for source files, but common for single-header libraries.
-// A better long-term solution would be to create a separate tree.h header.
-#include "tree.c" // Assuming test_main.c is in the same directory as tree.c (learnc/)
+#include "tree.h"
 
-// Simple test framework
 static int tests_run = 0;
 static int tests_passed = 0;
+
+typedef struct task {
+    int priority;
+    node_t node;
+} task_t;
+
+int compare(node_t *current, int target) {
+    task_t *task = CONTAINER_OF(current, task_t, node);
+    return task->priority - target;
+}
 
 #define ASSERT_TRUE(condition, message) do { \
     tests_run++; \

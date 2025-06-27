@@ -1,14 +1,6 @@
-#ifndef INTRUSIVE_TREE
-#define INTRUSIVE_TREE
+#include "tree.h"
 
-#include <stddef.h>
-
-typedef struct node {
-    struct node *left;
-    struct node *right;
-} node_t;
-
-static inline node_t* search(node_t *current, int target, int (*compare)(node_t *node, int target)) {
+node_t* search(node_t *current, int target, int (*compare)(node_t *node, int target)) {
     while (current != NULL) {
         int result = compare(current, target);
         if (result == 0) {
@@ -21,18 +13,3 @@ static inline node_t* search(node_t *current, int target, int (*compare)(node_t 
     }
     return NULL;
 }
-
-#define CONTAINER_OF(ptr, type, member) \
-    ((type *)((char *)(ptr) - offsetof(type, member)))
-
-typedef struct task {
-    int priority;
-    node_t node;
-} task_t;
-
-int compare(node_t *current, int target) {
-    task_t *task = CONTAINER_OF(current, task_t, node);
-    return task->priority - target;
-}
-
-#endif
